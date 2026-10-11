@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Reports - Smart Library</title>
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="container mt-3">
+        <h2>Reports</h2>
+        <p class="text-muted">All-time transaction report. For date filters, KPIs, trends and CSV exports use the
+            <a href="{{ url_for('analytics.dashboard') }}">Analytics Dashboard</a>.</p>
+
+        <table class="table table-bordered w-auto">
+            <tbody>
+                <tr><th>Total Transactions</th><td>{{ summary.total_transactions }}</td></tr>
+                <tr><th>Active Issues</th><td>{{ summary.active_issues }}</td></tr>
+                <tr><th>Total Returns</th><td>{{ summary.total_returns }}</td></tr>
+                <tr><th>Total Fines</th><td>₹{{ summary.total_fines }}</td></tr>
+            </tbody>
+        </table>
+
+        <a href="{{ url_for('generate_pdf') }}" class="btn btn-outline-success mb-3">Download PDF Report</a>
+        <a href="{{ url_for('analytics.exports') }}" class="btn btn-outline-primary mb-3">Analytics Data Export</a>
+
+        <div class="table-responsive">
+            <table class="table table-striped table-sm">
+                <thead><tr><th>ID</th><th>Book</th><th>Student</th><th>Department</th><th>Issued</th><th>Due</th><th>Returned</th><th>Fine</th><th>Status</th></tr></thead>
+                <tbody>
+                {% for t in transactions %}
+                    <tr><td>{{ t.issue_id }}</td><td>{{ t.title }}</td><td>{{ t.student_name }}</td><td>{{ t.department }}</td>
+                        <td>{{ t.issue_date }}</td><td>{{ t.due_date }}</td><td>{{ t.return_date or '-' }}</td>
+                        <td>₹{{ t.fine }}</td><td>{{ t.status }}</td></tr>
+                {% else %}
+                    <tr><td colspan="9" class="text-muted">No transactions yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Charts</h3>
+
+        <div>
+            <canvas id="booksStatusChart" height="150"></canvas>
+        </div>
+        <div class="mt-4">
+            <canvas id="issueReturnChart" height="150"></canvas>
+        </div>
+        <div class="mt-4">
+            <canvas id="fineChart" height="150"></canvas>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    async function loadChartData() {
+        const booksStatusData = await fetch('/chart/books_status').then(r => r.json());
+        const issueReturnData = await fetch('/chart/issue_return').then(r => r.json());
+        const fineData = await fetch('/chart/fine').then(r => r.json());
+
+        const ctxBooks = document.getElementById('booksStatusChart').getContext('2d');
+        new Chart(ctxBooks, {
+            type: 'doughnut',
+            data: {
+                labels: booksStatusData.labels,
+                datasets: [{
+                    label: 'Books Status',
+                    data: booksStatusData.counts,
+                    backgroundColor: ['#198754', '#ffc107']
+                }]
+            }
+        });
+
+        const ctxIssueReturn = document.getElementById('issueReturnChart').getContext('2d');
+        new Chart(ctxIssueReturn, {
+            type: 'line',
+            data: {
+                labels: issueReturnData.labels,
+                datasets: [
+                    {
+                        label: 'Issued Books',
+                        data: issueReturnData.issued,
+                        borderColor: '#0d6efd',
+                        fill: false
+                    },
+                    {
+                        label: 'Returned Books',
+                        data: issueReturnData.returned,
+                        borderColor: '#198754',
+                        fill: false
+                    }
+                ]
+            }
+        });
+
+        const ctxFine = document.getElementById('fineChart').getContext('2d');
+        new Chart(ctxFine, {
+            type: 'bar',
+            data: {
+                labels: fineData.labels,
+                datasets: [{
+                    label: 'Fine Collected (₹)',
+                    data: fineData.fines,
+                    backgroundColor: '#dc3545'
+                }]
+            }
+        });
+    }
+
+    loadChartData();
+</script>
+</body>
+</html>

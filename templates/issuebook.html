@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Issue Book - Smart Library</title>
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="container mt-4 col-md-8">
+        <h2>Issue Book</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div>
+                {% for category, message in messages %}
+                    <div class="alert alert-{{category}} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('issuebook') }}">
+            <div class="mb-3">
+                <label for="student_id" class="form-label">Select Student</label>
+                <select class="form-select" id="student_id" name="student_id" required>
+                    <option value="">-- Select Student --</option>
+                    {% for student in students %}
+                        <option value="{{ student.student_id }}">{{ student.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="book_id" class="form-label">Select Available Book</label>
+                <select class="form-select" id="book_id" name="book_id" required>
+                    <option value="">-- Select Book --</option>
+                    {% for book in books %}
+                        <option value="{{ book.book_id }}">{{ book.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="issue_date" class="form-label">Issue Date</label>
+                <input type="date" class="form-control" id="issue_date" name="issue_date" required value="{{ (datetime.utcnow().strftime('%Y-%m-%d')) }}">
+            </div>
+            <div class="mb-3">
+                <label for="due_date" class="form-label">Due Date</label>
+                <input type="date" class="form-control" id="due_date" name="due_date" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Issue Book</button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+        </form>
+    </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

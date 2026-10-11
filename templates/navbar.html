@@ -1,0 +1,42 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="{{ url_for('dashboard') }}">SmartLibrary</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="booksDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Books</a>
+          <ul class="dropdown-menu" aria-labelledby="booksDropdown">
+            <li><a class="dropdown-item" href="{{ url_for('addbook') }}">Add Book</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('viewbooks') }}">View Books</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('searchbook') }}">Search Book</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('issuebook') }}">Issue Book</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('returnbook') }}">Return Book</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="studentsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Students</a>
+          <ul class="dropdown-menu" aria-labelledby="studentsDropdown">
+            <li><a class="dropdown-item" href="{{ url_for('addstudent') }}">Add Student</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('viewstudents') }}">View Students</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('searchstudent') }}">Search Student</a></li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('reports') }}">Reports</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('analytics.dashboard') }}">Analytics</a>
+        </li>
+      </ul>
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('profile') }}">{{ session.user_name }}</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>

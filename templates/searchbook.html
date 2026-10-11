@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Search Book - Smart Library</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-light">
+{% include 'navbar.html' %}
+<div class="container mt-4">
+    <h2 class="mb-3">🔍 Search Book</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <form action="{{ url_for('searchbook') }}" method="POST" class="mb-4">
+        <div class="input-group">
+            <input type="text" name="search" value="{{ search }}" class="form-control"
+                   placeholder="Enter title or author" required>
+            <button class="btn btn-primary">Search</button>
+            <a href="{{ url_for('viewbooks') }}" class="btn btn-secondary">Back</a>
+        </div>
+    </form>
+
+    {% if search %}
+        <p class="text-muted">{{ books|length }} result(s) for "{{ search }}"</p>
+        <table class="table table-striped table-bordered">
+            <thead><tr><th>ID</th><th>Title</th><th>Author</th><th>Quantity</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+            {% for b in books %}
+                <tr>
+                    <td>{{ b.book_id }}</td><td>{{ b.title }}</td><td>{{ b.author }}</td>
+                    <td>{{ b.quantity }}</td><td>{{ b.status }}</td>
+                    <td><a href="{{ url_for('editbook', book_id=b.book_id) }}" class="btn btn-sm btn-primary">Edit</a></td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" class="text-center">No matching books found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+</body>
+</html>

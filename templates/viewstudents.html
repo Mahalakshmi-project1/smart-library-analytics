@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>View Students - Smart Library</title>
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+    {% include 'navbar.html' %}
+<div class="container mt-3">
+    <h2>Students</h2>
+    <a href="{{ url_for('addstudent') }}" class="btn btn-success mb-3">Add New Student</a>
+    <a href="{{ url_for('export_data', data_type='students') }}" class="btn btn-outline-primary mb-3">Export CSV</a>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{category}} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="GET" action="{{ url_for('searchstudent') }}" class="mb-3">
+        <div class="input-group">
+            <input type="text" name="query" required class="form-control" placeholder="Search by Name, Dept, Email or Phone..." />
+            <button class="btn btn-outline-secondary" type="submit">Search</button>
+        </div>
+    </form>
+
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Student ID</th><th>Name</th><th>Department</th><th>Year</th><th>Email</th><th>Phone</th><th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ student.student_id }}</td>
+                <td>{{ student.name }}</td>
+                <td>{{ student.department }}</td>
+                <td>{{ student.year }}</td>
+                <td>{{ student.email }}</td>
+                <td>{{ student.phone }}</td>
+                <td>
+                    <a href="{{ url_for('editstudent', student_id=student.student_id) }}" class="btn btn-sm btn-primary">Edit</a>
+                    <form action="{{ url_for('deletestudent', student_id=student.student_id) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Are you sure you want to delete this student?');">
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="text-center">No students available.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

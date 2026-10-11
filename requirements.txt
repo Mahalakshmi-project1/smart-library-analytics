@@ -1,0 +1,6 @@
+Flask>=3.0
+mysql-connector-python>=8.0
+Werkzeug>=3.0
+fpdf2>=2.7
+pandas>=2.0
+gunicorn>=22.0

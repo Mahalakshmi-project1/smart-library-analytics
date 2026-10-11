@@ -1,0 +1,30 @@
+{# Date-range filter. Expects: presets, rng, today, and the target endpoint name in `target`. #}
+<form method="get" action="{{ url_for(target) }}" class="card card-body mb-3" id="rangeForm">
+    <div class="row g-2 align-items-end">
+        <div class="col-12 col-lg-auto">
+            <div class="btn-group flex-wrap" role="group" aria-label="Date range">
+                {% for key, label in presets if key != 'custom' %}
+                <button type="submit" name="preset" value="{{ key }}"
+                        class="btn btn-outline-primary btn-sm {% if rng.preset == key %}active{% endif %}">{{ label }}</button>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-6 col-md-3 col-lg-2">
+            <label class="form-label mb-0 small">From</label>
+            <input type="date" name="start" class="form-control form-control-sm" max="{{ today }}"
+                   value="{{ rng.start }}">
+        </div>
+        <div class="col-6 col-md-3 col-lg-2">
+            <label class="form-label mb-0 small">To</label>
+            <input type="date" name="end" class="form-control form-control-sm" max="{{ today }}"
+                   value="{{ rng.end }}">
+        </div>
+        <div class="col-auto">
+            <button type="submit" name="preset" value="custom"
+                    class="btn btn-sm {% if rng.preset == 'custom' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                Apply custom range</button>
+        </div>
+    </div>
+    <div class="section-note mt-2">Showing <strong>{{ rng.label }}</strong>
+        ({{ rng.start }} to {{ rng.end }}).</div>
+</form>

@@ -1,0 +1,49 @@
+{% extends 'analytics_base.html' %}
+{% set active = 'exports' %}
+{% block title %}Analytics Data Export{% endblock %}
+
+{% block content %}
+{% set target = 'analytics.exports' %}
+<h2 class="mb-1">Analytics Data Export</h2>
+<p class="section-note">CSV files are UTF-8 (with BOM), ISO-8601 dates, one header row, no thousands separators:
+    open directly in Excel, or load into Power BI, Tableau or <code>pandas.read_csv()</code>.</p>
+
+<div class="card card-body mb-3">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div>
+            <strong>ETL job</strong>
+            <span class="section-note d-block">Rebuilds <code>monthly_library_stats</code>,
+                <code>department_library_stats</code> and <code>book_borrowing_stats</code> from the transactional tables.
+                The three <em>Analytics</em> exports below run it automatically so they are always fresh.</span>
+            {% if etl and etl.run_id %}
+            <span class="section-note d-block">Last run #{{ etl.run_id }}: <strong>{{ etl.status }}</strong>
+                at {{ etl.finished_at }} · {{ etl.source_rows }} loans read, {{ etl.rejected_rows }} rejected,
+                {{ etl.monthly_rows }} months / {{ etl.department_rows }} departments / {{ etl.book_rows }} books loaded.</span>
+            {% else %}<span class="section-note d-block text-warning">ETL has not been run yet.</span>{% endif %}
+        </div>
+        <form method="post" action="{{ url_for('analytics.etl_run') }}">
+            <button class="btn btn-outline-primary"><i class="bi bi-arrow-repeat"></i> Run ETL now</button>
+        </form>
+    </div>
+</div>
+
+<p class="mb-1"><strong>Date range</strong> <span class="section-note">(applies to Issue / Return and Fine Report, filtered by issue date)</span></p>
+{% include '_range_filter.html' %}
+
+<div class="row g-3">
+{% for e in exports %}
+    <div class="col-12 col-md-6">
+        <div class="card h-100"><div class="card-body d-flex flex-column">
+            <h6 class="card-title">{{ e.label }} CSV
+                <span class="badge text-bg-{{ 'primary' if e.source == 'summary' else 'secondary' }} ms-1">{{ 'ETL summary table' if e.source == 'summary' else 'live SQL' }}</span>
+                {% if e.uses_range %}<span class="badge text-bg-light border ms-1">date-filtered</span>{% endif %}</h6>
+            <div class="section-note"><strong>Grain:</strong> {{ e.grain }}</div>
+            <div class="section-note mb-3"><strong>Columns:</strong> {{ e.columns }}</div>
+            <a class="btn btn-sm btn-success mt-auto align-self-start"
+               href="{{ url_for('analytics.export_csv', name=e.name, preset=rng.preset, start=rng.start, end=rng.end) }}">
+                <i class="bi bi-download"></i> Download</a>
+        </div></div>
+    </div>
+{% endfor %}
+</div>
+{% endblock %}

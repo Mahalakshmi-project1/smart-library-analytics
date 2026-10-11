@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>View Books - Smart Library</title>
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+    {% include 'navbar.html' %}
+<div class="container mt-3">
+    <h2>All Books</h2>
+    <a href="{{ url_for('addbook') }}" class="btn btn-success mb-3">Add New Book</a>
+    <a href="{{ url_for('export_data', data_type='books') }}" class="btn btn-outline-primary mb-3">Export CSV</a>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('searchbook') }}" class="mb-3">
+        <div class="input-group">
+            <input type="text" name="search" required class="form-control" placeholder="Search by title or author..." />
+            <button class="btn btn-outline-secondary" type="submit">Search</button>
+        </div>
+    </form>
+
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr><th>ID</th><th>Title</th><th>Author</th><th>Quantity</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+            {% for book in books %}
+            <tr>
+                <td>{{ book.book_id }}</td>
+                <td>{{ book.title }}</td>
+                <td>{{ book.author }}</td>
+                <td>{{ book.quantity }}</td>
+                <td>{{ book.status }}</td>
+                <td>
+                    <a href="{{ url_for('editbook', book_id=book.book_id) }}" class="btn btn-sm btn-primary">Edit</a>
+                    <form action="{{ url_for('deletebook', book_id=book.book_id) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Are you sure you want to delete this book?');">
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center">No books available.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

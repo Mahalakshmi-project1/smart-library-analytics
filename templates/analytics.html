@@ -1,0 +1,154 @@
+{% extends 'analytics_base.html' %}
+{% set active = 'dashboard' %}
+{% block title %}Analytics Dashboard{% endblock %}
+{% block head %}<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>{% endblock %}
+
+{% macro kpi(label, value, sub='', icon='bi-bar-chart') %}
+<div class="col-6 col-md-4 col-xl-3">
+    <div class="card kpi-card h-100"><div class="card-body">
+        <div class="kpi-label"><i class="bi {{ icon }}"></i> {{ label }}</div>
+        <div class="kpi-value">{{ value }}</div>
+        {% if sub %}<div class="kpi-sub">{{ sub }}</div>{% endif %}
+    </div></div>
+</div>
+{% endmacro %}
+
+{% macro chart_card(id, title, note='', col='col-12 col-lg-6') %}
+<div class="{{ col }}">
+    <div class="card h-100"><div class="card-body">
+        <h6 class="card-title mb-0">{{ title }}</h6>
+        {% if note %}<div class="section-note mb-2">{{ note }}</div>{% endif %}
+        <div class="chart-box"><canvas id="{{ id }}"></canvas><div class="chart-empty d-none" id="{{ id }}-empty">No data for this selection</div></div>
+    </div></div>
+</div>
+{% endmacro %}
+
+{% block content %}
+{% set target = 'analytics.dashboard' %}
+<h2 class="mb-1">Analytics Dashboard</h2>
+<p class="section-note">Every number below is computed live by SQL queries on the MySQL database
+    (as of {{ data.as_of }}).</p>
+
+{% include '_range_filter.html' %}
+
+{% set k = data.kpis %}
+<h6 class="text-uppercase text-muted">Library snapshot <span class="fw-normal">(not affected by the date filter)</span></h6>
+<div class="row g-3 mb-4">
+    {{ kpi('Total Books', k.total_books, 'titles in catalogue', 'bi-book') }}
+    {{ kpi('Total Students', k.total_students, '', 'bi-people') }}
+    {{ kpi('Currently Issued', k.currently_issued, 'open loans', 'bi-journal-arrow-up') }}
+    {{ kpi('Overdue Books', k.overdue_books, 'fine accruing: ₹' ~ k.fine_accruing, 'bi-exclamation-triangle') }}
+    {{ kpi('Availability Rate', k.availability_rate ~ '%', 'available titles / all titles', 'bi-check2-circle') }}
+    {{ kpi('Overdue Rate', k.overdue_rate ~ '%', 'overdue / currently issued', 'bi-clock-history') }}
+</div>
+
+<h6 class="text-uppercase text-muted">Selected period <span class="fw-normal">({{ rng.label }})</span></h6>
+<div class="row g-3 mb-4">
+    {{ kpi('Total Issues', k.total_issues, k.active_borrowers ~ ' active borrowers', 'bi-box-arrow-up-right') }}
+    {{ kpi('Total Returns', k.total_returns, 'avg loan ' ~ k.avg_loan_days ~ ' days', 'bi-box-arrow-in-down-left') }}
+    {{ kpi('Fine Collected', '₹' ~ k.fine_collected, 'avg ₹' ~ k.avg_fine_per_late_return ~ ' per late return', 'bi-cash-coin') }}
+    {{ kpi('Return Rate', k.return_rate ~ '%', 'issues in period already returned', 'bi-arrow-repeat') }}
+    {% if k.most_borrowed_book %}
+        {{ kpi('Most Borrowed Book', k.most_borrowed_book.title, k.most_borrowed_book.times_issued ~ ' issues', 'bi-trophy') }}
+    {% else %}{{ kpi('Most Borrowed Book', '—', 'no issues in period', 'bi-trophy') }}{% endif %}
+    {% if k.most_active_student %}
+        {{ kpi('Most Active Student', k.most_active_student.name, k.most_active_student.books_borrowed ~ ' books · ' ~ k.most_active_student.dept_name, 'bi-person-check') }}
+    {% else %}{{ kpi('Most Active Student', '—', 'no issues in period', 'bi-person-check') }}{% endif %}
+</div>
+
+<div class="row g-3 mb-4">
+    {{ chart_card('chartIssues', 'Monthly Book Issue Trend', 'Issues by issue date') }}
+    {{ chart_card('chartReturns', 'Monthly Return Trend', 'Returns by return date') }}
+    {{ chart_card('chartFine', 'Fine Collection Trend (₹)', 'Fines by return date') }}
+    {{ chart_card('chartDept', 'Department-wise Borrowing', 'Issues in selected period') }}
+    {{ chart_card('chartAvail', 'Available vs Issued Books', 'Current catalogue status') }}
+    {{ chart_card('chartCategory', 'Books by Category', 'Titles per category') }}
+    {{ chart_card('chartAuthors', 'Top Authors by Titles', 'Top 10 authors in catalogue') }}
+    {{ chart_card('chartTopBooks', 'Top 10 Most Borrowed Books', 'Selected period') }}
+    {{ chart_card('chartTopStudents', 'Top 10 Active Students', 'Selected period') }}
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-lg-6">
+        <div class="card h-100"><div class="card-body">
+            <h6 class="card-title">Department Borrowing Detail</h6>
+            <div class="table-responsive"><table class="table table-sm table-hover mb-0">
+                <thead><tr><th>Department</th><th class="text-end">Issues</th><th class="text-end">Borrowers</th><th class="text-end">Still issued</th></tr></thead>
+                <tbody>
+                {% for r in data.tables.department_borrowing %}
+                    <tr><td>{{ r.dept_name }}</td><td class="text-end">{{ r.issue_count }}</td><td class="text-end">{{ r.borrowers }}</td><td class="text-end">{{ r.still_issued }}</td></tr>
+                {% else %}<tr><td colspan="4" class="text-muted">No issues in this period.</td></tr>{% endfor %}
+                </tbody></table></div>
+        </div></div>
+    </div>
+    <div class="col-12 col-lg-6">
+        <div class="card h-100"><div class="card-body">
+            <h6 class="card-title">Frequent Late Returners <span class="section-note">(2+ late returns in period)</span></h6>
+            <div class="table-responsive"><table class="table table-sm table-hover mb-0">
+                <thead><tr><th>Student</th><th>Department</th><th class="text-end">Late returns</th><th class="text-end">Fine (₹)</th></tr></thead>
+                <tbody>
+                {% for r in data.tables.frequent_late %}
+                    <tr><td>{{ r.name }}</td><td>{{ r.dept_name }}</td><td class="text-end">{{ r.late_returns }}</td><td class="text-end">{{ r.total_fine }}</td></tr>
+                {% else %}<tr><td colspan="4" class="text-muted">No repeat late returners in this period.</td></tr>{% endfor %}
+                </tbody></table></div>
+        </div></div>
+    </div>
+    <div class="col-12">
+        <div class="card"><div class="card-body">
+            <h6 class="card-title">Overdue Right Now <span class="section-note">(10 oldest open loans past due date)</span></h6>
+            <div class="table-responsive"><table class="table table-sm table-hover mb-0">
+                <thead><tr><th>Issue #</th><th>Book</th><th>Student</th><th>Due date</th><th class="text-end">Days overdue</th><th class="text-end">Fine accruing (₹)</th></tr></thead>
+                <tbody>
+                {% for r in data.tables.overdue_now %}
+                    <tr><td>{{ r.issue_id }}</td><td>{{ r.title }}</td><td>{{ r.student_name }}</td><td>{{ r.due_date }}</td><td class="text-end">{{ r.days_overdue }}</td><td class="text-end">{{ r.fine_accruing }}</td></tr>
+                {% else %}<tr><td colspan="6" class="text-muted">No overdue books. </td></tr>{% endfor %}
+                </tbody></table></div>
+        </div></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const charts = {{ data.charts|tojson }};
+const palette = ['#0d6efd','#198754','#fd7e14','#6f42c1','#dc3545','#20c997','#ffc107','#0dcaf0','#d63384','#6c757d'];
+
+function draw(id, type, series, label, opts = {}) {
+    const el = document.getElementById(id);
+    const hasData = series.values.length > 0 && series.values.some(v => v > 0);
+    if (!hasData) { document.getElementById(id + '-empty').classList.remove('d-none'); }
+    const circular = type === 'doughnut';
+    new Chart(el, {
+        type: type,
+        data: {
+            labels: series.labels,
+            datasets: [{
+                label: label,
+                data: series.values,
+                backgroundColor: circular ? palette : (opts.color || '#0d6efd'),
+                borderColor: opts.color || '#0d6efd',
+                borderWidth: type === 'line' ? 2 : 0,
+                tension: .3,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            indexAxis: opts.horizontal ? 'y' : 'x',
+            plugins: { legend: { display: circular } },
+            scales: circular ? {} : { [opts.horizontal ? 'x' : 'y']: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+    });
+}
+
+draw('chartIssues', 'line', charts.monthly_issues, 'Books issued', {color: '#0d6efd'});
+draw('chartReturns', 'line', charts.monthly_returns, 'Books returned', {color: '#198754'});
+draw('chartFine', 'bar', charts.fine_trend, 'Fine collected (₹)', {color: '#dc3545'});
+draw('chartDept', 'bar', charts.department_borrowing, 'Issues', {color: '#6f42c1'});
+draw('chartAvail', 'doughnut', charts.availability, 'Books');
+draw('chartCategory', 'doughnut', charts.books_by_category, 'Titles');
+draw('chartAuthors', 'bar', charts.top_authors, 'Titles', {color: '#fd7e14', horizontal: true});
+draw('chartTopBooks', 'bar', charts.top_books, 'Times issued', {color: '#20c997', horizontal: true});
+draw('chartTopStudents', 'bar', charts.top_students, 'Books borrowed', {color: '#0dcaf0', horizontal: true});
+</script>
+{% endblock %}
